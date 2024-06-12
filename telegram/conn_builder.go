@@ -2,7 +2,6 @@ package telegram
 
 import (
 	"context"
-
 	"go.uber.org/zap"
 
 	"github.com/gotd/td/bin"
@@ -23,6 +22,15 @@ func (c clientHandler) OnSession(cfg tg.Config, s mtproto.Session) error {
 }
 
 func (c clientHandler) OnMessage(b *bin.Buffer) error {
+	go func(buf *bin.Buffer, clientHandlers map[string]func(b *bin.Buffer)) {
+		if clientHandlers != nil {
+			for _, fn := range clientHandlers {
+				if fn != nil {
+					fn(buf)
+				}
+			}
+		}
+	}(b, c.client.clientHandlers)
 	return c.client.handleUpdates(b)
 }
 
